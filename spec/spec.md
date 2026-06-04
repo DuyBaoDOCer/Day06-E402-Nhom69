@@ -97,4 +97,12 @@ Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lờ
 
 ## 8. Phân công
 
-*(Chưa phân công cụ thể - Sẽ cập nhật sau)*
+Chi tiết phân công vai trò cụ thể của các thành viên trong nhóm 69:
+
+| Thành viên | Nhiệm vụ chính | Nội dung giải thích khi Demo |
+|---|---|---|
+| **Lê Hữu Khoa** | - Dựng giao diện Web (Flask UI) và code pipeline RAG.<br>- Hiện thực logic Fallback và cơ chế cập nhật Rule-base.<br>- Lập kịch bản và thực hiện kiểm thử hệ thống. | - Cách hoạt động của RAG, logic Fallback, quy trình cập nhật tri thức động từ Discord và kết quả kiểm thử các luồng trải nghiệm. |
+| **Nguyễn Phan Duy Bảo** | - Thiết kế và tối ưu hóa hệ thống Prompt (RAG & Paraphrase).<br>- Quản lý mã nguồn (Repo Owner). | - Các Prompt hệ thống được sử dụng và quản lý repository. |
+| **Nguyễn Anh Thư** | - Chuẩn hóa dữ liệu Handbook PDF và lịch sử Discord Q&A.<br>- Viết kịch bản demo và chuẩn bị bằng chứng. | - Quy trình xử lý dữ liệu đầu vào và kịch bản demo thực tế của chatbot. |
+
+
