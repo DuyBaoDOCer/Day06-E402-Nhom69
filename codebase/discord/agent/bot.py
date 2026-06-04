@@ -10,21 +10,22 @@ from tools.rulebase import (
     build_rulebase_cache,
 )
 
-_paraphrase_chain = (
-    ChatPromptTemplate.from_template(
-        "Generate 5 Vietnamese paraphrases of the following question. "
-        "Return ONLY the paraphrases, one per line, no numbering, no explanation.\n\n"
-        "Question: {question}"
-    )
-    | ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7)
-    | StrOutputParser()
+_PARAPHRASE_PROMPT = ChatPromptTemplate.from_template(
+    "Generate 5 Vietnamese paraphrases of the following question. "
+    "Return ONLY the paraphrases, one per line, no numbering, no explanation.\n\n"
+    "Question: {question}"
 )
 
 
 async def _generate_paraphrases(question: str) -> list[str]:
-    """Dùng LLM sinh 5 cách hỏi khác nhau để mở rộng Rule-base."""
+    """Dùng LLM sinh 5 cách hỏi khác nhau để mở rộng Rule-base (lazy init)."""
     try:
-        raw = await _paraphrase_chain.ainvoke({"question": question})
+        chain = (
+            _PARAPHRASE_PROMPT
+            | ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7)
+            | StrOutputParser()
+        )
+        raw = await chain.ainvoke({"question": question})
         paraphrases = [line.strip() for line in raw.strip().splitlines() if line.strip()]
         return paraphrases[:5]
     except Exception:
@@ -102,7 +103,7 @@ def create_client(embeddings, rag_chain) -> type:
                         await asyncio.to_thread(build_rulebase_cache, embeddings)
                         para_preview = "\n".join(f"  - {p}" for p in paraphrases)
                         await message.reply(
-                            f"✅ Đã lưu vào Rule-base! ({len(all_questions)} biến thể câu hỏi)\n"
+                            f"Đã lưu vào Rule-base! ({len(all_questions)} biến thể câu hỏi)\n"
                             f"**Q gốc:** {question}\n"
                             f"**Paraphrases:**\n{para_preview}\n"
                             f"**A:** {answer}",

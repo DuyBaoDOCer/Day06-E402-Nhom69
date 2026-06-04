@@ -18,7 +18,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 load_dotenv()
 
-# ── Constants ──────────────────────────────────────────────────────────
+# Constants
 RULEBASE_PATH   = os.getenv('RULEBASE_PATH', '../discord/data/rulebase.json')
 DISCORD_INVITE  = os.getenv('DISCORD_INVITE_URL', '')
 SIMILARITY_THRESHOLD = 0.78
@@ -28,7 +28,7 @@ OUT_OF_SCOPE_REPLY   = (
     "Vui lòng tham gia **Discord** để được Mentor hỗ trợ trực tiếp nhé!"
 )
 
-# ── Rule-base ──────────────────────────────────────────────────────────
+# Rule-base
 _rulebase_cache: list = []
 _rulebase_mtime: float = 0.0
 
@@ -90,7 +90,7 @@ def _search_rulebase(emb_model, question: str):
     return None
 
 
-# ── RAG Pipeline ───────────────────────────────────────────────────────
+# RAG Pipeline
 _MARKDOWN_SEPARATORS = [
     "\n#{1,6} ", "```\n", "\n\\*\\*\\*+\n", "\n---+\n", "\n___+\n", "\n\n", "\n", " ", ""
 ]
@@ -173,7 +173,7 @@ _rag_chain = (
 _build_rulebase_cache(embeddings)
 print("Pipeline sẵn sàng!")
 
-# ── Flask App ──────────────────────────────────────────────────────────
+# Flask App
 app = Flask(__name__, static_folder='.', static_url_path='')
 
 
@@ -206,7 +206,12 @@ def ask():
             return jsonify({'answer': OUT_OF_SCOPE_REPLY, 'source': 'out_of_scope'})
         return jsonify({'answer': answer, 'source': 'rag'})
     except Exception as e:
-        return jsonify({'answer': f'Lỗi tra cứu: {e}', 'source': 'error'})
+        err_str = str(e)
+        if 'RESOURCE_EXHAUSTED' in err_str or '429' in err_str:
+            msg = 'Hệ thống đang quá tải, vui lòng thử lại sau ít phút hoặc đặt câu hỏi trên Discord để được Mentor hỗ trợ.'
+        else:
+            msg = 'Đã xảy ra lỗi khi tra cứu, vui lòng thử lại sau.'
+        return jsonify({'answer': msg, 'source': 'error'})
 
 
 if __name__ == '__main__':

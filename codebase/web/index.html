@@ -2473,7 +2473,7 @@
 
     <div id="extension-pddjl"></div>
 
-    <!-- ── AI Chat + Discord Widget ─────────────────────────────── -->
+    <!-- AI Chat + Discord Widget -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
@@ -2558,38 +2558,41 @@
       .w-messages::-webkit-scrollbar { width: 4px; }
       .w-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
 
-      .w-msg { display: flex; gap: 8px; align-items: flex-end; }
-      .w-msg.w-user { flex-direction: row-reverse; }
+      #ai-widget .w-msg { display: flex !important; flex-wrap: nowrap !important; gap: 8px; align-items: flex-end !important; width: 100%; }
+      #ai-widget .w-msg.w-user { flex-direction: row-reverse !important; justify-content: flex-start !important; }
 
-      .w-avatar {
+      #ai-widget .w-avatar {
         width: 28px; height: 28px; border-radius: 50%;
         background: #e8eaf6;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px; flex-shrink: 0;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+        font-size: 14px; flex-shrink: 0 !important;
+        line-height: 1 !important;
       }
-      .w-msg.w-user .w-avatar { background: #003087; }
+      #ai-widget .w-msg.w-user .w-avatar { background: #003087; }
 
-      .w-bubble {
+      #ai-widget .w-bubble {
         background: #f0f2f8;
         border-radius: 14px 14px 14px 4px;
         padding: 9px 13px;
-        font-size: 13.5px;
-        line-height: 1.55;
-        color: #1a1a2e;
-        max-width: 85%;
+        font-size: 13.5px !important;
+        line-height: 1.55 !important;
+        color: #1a1a2e !important;
+        max-width: 80%;
+        word-break: break-word;
+        box-sizing: border-box !important;
       }
-      .w-msg.w-user .w-bubble {
-        background: linear-gradient(135deg, #003087, #1565c0);
-        color: #fff;
+      #ai-widget .w-msg.w-user .w-bubble {
+        background: linear-gradient(135deg, #003087, #1565c0) !important;
+        color: #fff !important;
         border-radius: 14px 14px 4px 14px;
       }
-      .w-bubble p { margin-bottom: 6px; }
-      .w-bubble p:last-child { margin-bottom: 0; }
-      .w-bubble ul, .w-bubble ol { padding-left: 16px; margin: 4px 0; }
-      .w-bubble li { margin-bottom: 3px; }
-      .w-bubble strong { font-weight: 600; }
-      .w-msg.w-user .w-bubble code { background: rgba(255,255,255,0.2); }
-      .w-bubble code { background: rgba(0,0,0,0.07); border-radius: 3px; padding: 1px 4px; font-size: 12px; }
+      #ai-widget .w-bubble p { margin-bottom: 6px !important; margin-top: 0 !important; }
+      #ai-widget .w-bubble p:last-child { margin-bottom: 0 !important; }
+      #ai-widget .w-bubble ul, #ai-widget .w-bubble ol { padding-left: 16px; margin: 4px 0; }
+      #ai-widget .w-bubble li { margin-bottom: 3px; }
+      #ai-widget .w-bubble strong { font-weight: 600; }
+      #ai-widget .w-msg.w-user .w-bubble code { background: rgba(255,255,255,0.2); }
+      #ai-widget .w-bubble code { background: rgba(0,0,0,0.07); border-radius: 3px; padding: 1px 4px; font-size: 12px; }
 
       .w-src-badge {
         display: inline-block; margin-top: 6px;
@@ -2790,8 +2793,14 @@
         input.style.height = 'auto';
         input.style.height = Math.min(input.scrollHeight, 100) + 'px';
       });
+
+      let _isSubmitting = false;
       input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+        // e.isComposing = true khi IME đang compose (Unikey, macOS Vietnamese...)
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
       });
 
       function addMsg(role, html) {
@@ -2833,7 +2842,8 @@
       form.addEventListener('submit', async e => {
         e.preventDefault();
         const q = input.value.trim();
-        if (!q) return;
+        if (!q || _isSubmitting) return;
+        _isSubmitting = true;
         addMsg('user', `<p>${q.replace(/</g,'&lt;')}</p>`);
         input.value = ''; input.style.height = 'auto';
         sendBtn.disabled = true;
@@ -2851,6 +2861,7 @@
           typing.remove();
           addMsg('bot', '<p>Kết nối thất bại, thử lại sau.</p>');
         } finally {
+          _isSubmitting = false;
           sendBtn.disabled = false;
           input.focus();
         }
