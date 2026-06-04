@@ -30,10 +30,11 @@ Quan sát hành vi của các học viên khác trong lớp khi tương tác v�
 
 ## 2. Lát cắt để build (Build slice)
 
-Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lời hành chính hoặc tài nguyên học tập, **Kuter** sẽ dùng AI RAG kết hợp đa nguồn để:
-1. **Automate** trả lời chính xác các câu hỏi FAQ hành chính dựa trên Handbook PDF (kèm trích dẫn số trang).
-2. **Augment** câu trả lời cho các câu hỏi vận hành và kỹ thuật bằng cách trích xuất, tổng hợp từ lịch sử hỏi đáp (Discord Q&A) giữa admin/mentor và học viên để đưa ra gợi ý giải pháp nháp nhanh chóng.
-3. **Fallback** an toàn bằng nút "Báo cáo Mentor" và disclaimer rõ ràng khi độ tin cậy thấp hoặc câu hỏi ngoài phạm vi dữ liệu.
+Nhóm phát triển **Kuter** dưới dạng một giải pháp tích hợp hai thành phần chính:
+1. **Discord Bot (Prototype chính):** Chatbot hoạt động trực tiếp trên server Discord của lớp học để hỗ trợ học viên và mentor giải đáp thắc mắc.
+2. **Web Interface (VinUni Clone):** Bản sao trang landing page của chương trình VinAI Thực chiến tích hợp widget bong bóng chat chứa iframe để minh họa cách nhúng Kuter vào website phục vụ ứng viên mới.
+
+Quyết định cốt lõi của AI: Khi nhận câu hỏi, hệ thống sẽ tự động so khớp ngữ nghĩa với cơ sở tri thức động (Rule-base). Nếu không khớp, AI RAG sẽ tự động truy xuất tài liệu Handbook PDF. Nếu câu hỏi nằm ngoài phạm vi tài liệu, bot kích hoạt cơ chế Fallback và cho phép Mentor cập nhật trực tiếp tri thức mới.
 
 ---
 
@@ -41,54 +42,55 @@ Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lờ
 
 | Ô | Nội dung chi tiết |
 |---|---|
-| **Value** — Giá trị | - **Đối tượng:** Học viên và ứng viên VinAI Thực chiến.<br>- **Nỗi đau:** Trợ lý Kute cũ chỉ trả lời từ Handbook tĩnh, không cập nhật được Q&A vận hành và tài nguyên trên Discord.<br>- **AI giải quyết:** RAG tích hợp Handbook tĩnh và Q&A Discord động giúp học viên tự giải quyết vấn đề ngay lập tức. |
-| **Trust** — Niềm tin | - **Nhận diện sai:** Người dùng dễ dàng nhận diện nhờ disclaimer rõ ràng gắn kèm mọi câu trả lời kỹ thuật/vận hành từ Discord.<br>- **Xử lý sai:** Cung cấp nút "Báo cáo Mentor" ngay dưới câu trả lời và hệ thống bình chọn Thumbs Up/Down để hoàn tác và chuyển tiếp lên Mentor/Admin thực tế. |
-| **Feasibility** — Tính khả thi | - **Dữ liệu cần có:** Handbook PDF chính thức và lịch sử Q&A trên Discord đã được làm sạch.<br>- **Rủi ro lớn nhất:** AI hallucinate ra giải pháp kỹ thuật/thủ tục sai lệch gây bối rối cho học viên.<br>- **Ngưỡng dừng:** Nếu độ tin cậy của câu trả lời < 75%, bot tự động chuyển luồng sang tag Mentor hỗ trợ trực tiếp. |
-| **Tín hiệu học** | Khi học viên nhấn Thumbs Down hoặc "Báo cáo Mentor", câu hỏi và câu trả lời lỗi sẽ được tự động log lại vào cơ sở dữ liệu hiệu chỉnh để ban tổ chức kiểm duyệt, cập nhật dữ liệu huấn luyện hoặc tinh chỉnh prompt. |
+| **Value** — Giá trị | - **Đối tượng:** Học viên, ứng viên và ban tổ chức chương trình VinAI Thực chiến.<br>- **Nỗi đau:** Trợ lý Kute cũ chỉ trả lời từ Handbook tĩnh, hoàn toàn "mù" thông tin Q&A động và lỗi kỹ thuật phát sinh thực tế trên Discord.<br>- **AI giải quyết:** Tích hợp RAG từ Handbook PDF kết hợp với Rule-base động (mentor-driven) được cập nhật thời gian thực qua tính năng Reply trên Discord. |
+| **Trust** — Niềm tin | - **Nhận diện sai:** Gắn nhãn nguồn rõ ràng (ví dụ: tiền tố `**[Rule-base]**` hoặc trích dẫn trang tài liệu từ PDF) để người dùng biết cơ sở câu trả lời.<br>- **Xử lý sai:** Khi AI không tìm thấy thông tin, bot gửi tin nhắn thông báo lỗi/chưa có dữ liệu rõ ràng, tránh bịa đặt thông tin (hallucination). Đồng thời mở cổng cho Mentor phản hồi trực tiếp để ghi đè hoặc bổ sung tri thức. |
+| **Feasibility** — Tính khả thi | - **Dữ liệu:** File Handbook PDF chính thức (`20K_AI_handbook_ver2.pdf`) và file JSON cơ sở dữ liệu tri thức động (`rulebase.json`).<br>- **Công nghệ:** Model `gemini-2.5-flash` và `gemini-embedding-001` qua LangChain, cơ sở dữ liệu vector FAISS cục bộ.<br>- **Rủi ro lớn nhất:** AI bịa đặt quy định hành chính sai lệch.<br>- **Ngưỡng dừng:** Sử dụng prompt strict constraint. Nếu RAG chain trả về kết quả không có trong tài liệu (phát hiện cụm từ *"I don't know based on the provided document"*), bot lập tức dừng và chuyển sang luồng Fallback. |
+| **Tín hiệu học** | Khi Mentor thực hiện **Reply** trực tiếp vào tin nhắn chờ trên Discord, cặp Câu hỏi - Câu trả lời mới sẽ được lưu vào file `rulebase.json` và tự động cập nhật cache embedding của bot tức thì để cải thiện tri thức cho các lần hỏi tiếp theo. |
 
 ---
 
 ## 4. Tăng năng lực hay tự động hóa (Augment vs Automate)
 
 * **Conditional Automation (Tự động hóa có điều kiện):**
-  * *Tự động hóa hoàn toàn (Automate):* Đối với các câu hỏi hành chính rõ ràng có sẵn nguồn trong Handbook (như điều kiện tham gia, lịch trình chung).
-  * *Tăng năng lực con người (Augment):* Đối với các câu hỏi vận hành phức tạp hoặc lỗi kỹ thuật. Kuter chỉ tổng hợp lịch sử Discord làm gợi ý nháp để học viên tham khảo tự sửa lỗi, không tự ý đưa ra quyết định thay cho con người.
-  * *Lý do chọn:* Giảm thiểu rủi ro AI đưa ra hướng dẫn kỹ thuật sai lệch làm học viên nản lòng, đồng thời giảm tải tối đa cho Mentor khỏi những câu hỏi lặp đi lặp lại.
+  * *Tự động hóa hoàn toàn (Automate):* Đối với các câu hỏi hành chính đã có quy định rõ ràng trong Handbook PDF (Kuter tự động dùng RAG trích xuất và trả lời kèm số trang cụ thể).
+  * *Tăng năng lực con người (Augment):* Đối với các câu hỏi phát sinh thực tế hoặc lỗi kỹ thuật. Kuter chỉ trả lời nếu đã được Mentor dạy trước đó (qua Rule-base động). Nếu chưa có, bot đóng vai trò ghi nhận lỗi (`new_issue.json`) và hỗ trợ Mentor trong việc thu thập và biên soạn câu trả lời mới một cách nhanh chóng nhất.
+  * *Lý do chọn:* Đảm bảo độ chính xác tuyệt đối đối với các quy chế hành chính của chương trình, tránh việc AI tự suy diễn các chính sách hoặc giải pháp kỹ thuật chưa được kiểm chứng, đồng thời tối ưu quy trình cập nhật tri thức của ban vận hành.
 
 ---
 
 ## 5. Bốn đường đi của trải nghiệm (Four paths)
 
-| Đường đi | Kịch bản trải nghiệm |
+| Đường đi | Kịch bản trải nghiệm thực tế trên Discord |
 |---|---|
-| **Đường thuận** | Học viên hỏi "Điều kiện tham gia lớp là gì?" -> Kuter truy xuất Handbook và trả lời chính xác kèm số trang trích dẫn. |
-| **Khi AI không chắc** | Học viên hỏi câu hỏi kỹ thuật phức tạp -> Kuter đưa ra giải pháp nháp dựa trên lịch sử Discord kèm disclaimer cảnh báo và nút "Báo cáo Mentor". |
-| **Khi AI sai** | Bot đưa ra câu trả lời không đúng -> Học viên bấm Thumbs Down hoặc nút "Báo cáo Mentor" để hủy câu trả lời và kích hoạt ticket hỗ trợ cho Mentor thực tế. |
-| **Khi người dùng sửa** | Học viên bấm báo cáo hoặc phản hồi -> Hệ thống log lại câu hỏi, câu trả lời sai và câu trả lời sửa đổi để cải tiến tri thức cho bot sau này. |
+| **Đường thuận** | Học viên hỏi câu hỏi hành chính (ví dụ: điều kiện nhận chứng chỉ) -> Bot dùng RAG tìm trong Handbook PDF -> Trả lời chính xác kèm số trang trích dẫn. |
+| **Khi AI không chắc** | Học viên hỏi câu hỏi ngoài tài liệu -> RAG trả về *"I don't know..."* -> Bot gửi câu trả lời Fallback thông báo chưa có thông tin, đồng thời ghi log vào `new_issue.json` ở trạng thái pending. |
+| **Khi AI sai** | RAG đưa ra câu trả lời không chính xác hoặc học viên nhận thấy câu trả lời thiếu cập nhật -> Mentor/Admin phát hiện và muốn điều chỉnh tri thức cho bot. |
+| **Khi người dùng sửa** | Mentor dùng tính năng **Reply** của Discord trả lời tin nhắn pending của học viên -> Bot tự động bắt sự kiện, lưu cặp Q&A chuẩn vào `rulebase.json` và cập nhật cache embedding. Lần sau khi học viên khác hỏi câu tương tự, bot nhận diện ngữ nghĩa (Cosine Similarity >= 0.85) và trả lời ngay với nhãn `**[Rule-base]**`. |
 
 ---
 
 ## 6. Những kiểu lỗi đáng lo nhất
 
-1. **Hallucination thông tin hành chính/quy định:**
-   * *Khi nào xảy ra:* Khi quy định thay đổi đột ngột hoặc dữ liệu Handbook bị chồng chéo.
-   * *Hậu quả:* Học viên nhận thông tin sai về deadline hoặc cách tính điểm, dẫn đến mất điểm hoặc vi phạm nội quy.
-   * *Cách xử lý:* Luôn đính kèm citation số trang gốc của Handbook và cập nhật cơ sở dữ liệu ngay khi có thông báo mới.
-2. **Gợi ý code/lỗi kỹ thuật sai:**
-   * *Khi nào xảy ra:* Khi lỗi của học viên quá mới hoặc lịch sử Discord chứa thông tin nhiễu.
-   * *Hậu quả:* Học viên chạy code lỗi nghiêm trọng hơn, gây ức chế.
-   * *Cách xử lý:* Gắn disclaimer nổi bật và cung cấp nút báo cáo Mentor tức thì.
+1. **Hallucination thông tin quy chế:**
+   * *Khi nào xảy ra:* Khi LLM cố suy diễn thông tin nằm ngoài văn bản Handbook PDF.
+   * *Cách xử lý:* Sử dụng strict system prompt ép LLM trả về cụm từ quy định *"I don't know based on the provided document."* nếu không tìm thấy context khớp trong vector database.
+2. **So khớp nhầm câu hỏi trong Rule-base (False Positive):**
+   * *Khi nào xảy ra:* Khi học viên đặt câu hỏi có từ khóa giống nhưng ý nghĩa khác với câu hỏi cũ đã được Mentor duyệt trong Rule-base.
+   * *Cách xử lý:* Cấu hình ngưỡng tương đồng Cosine Similarity cao (ngưỡng `0.85`) khi tìm kiếm trên cache embedding của `rulebase.json` để đảm bảo độ tin cậy.
 
 ---
 
 ## 7. Kế hoạch kiểm thử và bằng chứng demo
 
-* **Kịch bản kiểm thử Happy Path:**
-  * *Đầu vào:* "Xin thông tin về điều kiện nhận chứng chỉ và số trang Handbook nói về điều này."
-  * *Kỳ vọng:* Kuter trả lời rõ ràng kèm trích dẫn số trang chính xác.
-* **Kịch bản kiểm thử Low-Confidence / Fallback Path:**
-  * *Đầu vào:* "Lỗi đổi nhóm sau khi đã ghép cặp giải quyết thế nào?" hoặc "Lấy slide bài giảng Day 4 ở đâu?"
-  * *Kỳ vọng:* Kuter trích xuất câu trả lời đã có trên Discord, hiển thị cảnh báo thông tin tham khảo và hiển thị nút "Báo cáo Mentor".
+* **Kịch bản kiểm thử Happy Path (RAG Handbook):**
+  * *Đầu vào:* "/ask Điều kiện nhận chứng chỉ tốt nghiệp của chương trình là gì?"
+  * *Kỳ vọng:* Kuter trả lời rõ ràng kèm trích dẫn số trang cụ thể từ Handbook PDF.
+* **Kịch bản kiểm thử Fallback Path (Ngoài phạm vi):**
+  * *Đầu vào:* "/ask Làm sao để đổi chủ đề nhóm đã chọn?" (Giả định câu hỏi này chưa có trong rulebase).
+  * *Kỳ vọng:* Bot phản hồi thông báo xin lỗi chưa có thông tin và hướng dẫn Mentor reply. File `new_issue.json` được cập nhật thêm câu hỏi này.
+* **Kịch bản kiểm thử Dynamic Update (Mentor dạy học):**
+  * *Đầu vào:* Mentor dùng tính năng **Reply** vào tin nhắn chờ trên của học viên với nội dung: "Em hãy dùng lệnh /ticket trên Discord để báo ban tổ chức hỗ trợ đổi chủ đề nhé."
+  * *Kỳ vọng:* Bot gửi phản hồi xác nhận *"Đã lưu vào Rule-base!"*. File `rulebase.json` ghi nhận cặp câu hỏi và câu trả lời này. Khi học viên hỏi lại "/ask em muốn đổi chủ đề nhóm chọn thế nào", bot tự động tìm thấy trong Rule-base và trả lời chính xác với tiền tố `**[Rule-base]**`.
 
 ---
 
