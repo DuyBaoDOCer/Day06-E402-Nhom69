@@ -1,4 +1,19 @@
-# Batch 02 · Day 06 — AI Product Hackathon
+# Batch 02 · Day 06 — AI Product Hackathon - Nhóm 69 (Lớp E402)
+
+## 👥 Thành viên nhóm
+- Trần Nguyễn Anh Thư - **2A202600915**
+- Lê Hữu Khoa - **2A202600863**
+- Nguyễn Phan Duy Bảo - **2A202600688**
+
+## 🚀 Mô tả ngắn sản phẩm: Chatbot Kuter hỗ trợ Học viên VinAI Thực chiến
+**Kuter** là chatbot AI thế hệ mới được phát triển nhằm khắc phục triệt để các hạn chế của chatbot **"Trợ lý Kute"** hiện tại trong chương trình VinAI Thực chiến:
+* **Hạn chế của Trợ lý Kute cũ:** Chỉ trả lời được các câu hỏi tĩnh có trong Handbook, hoàn toàn "mù" thông tin trước các kiến thức, cập nhật và giải đáp lỗi kỹ thuật phát sinh trong các cuộc đối thoại thực tế giữa học viên và admin/mentor trên Discord.
+* **Giải pháp đột phá từ Kuter:** Sử dụng công nghệ RAG (Retrieval-Augmented Generation) đa nguồn:
+  * **Hành chính (Handbook PDF):** Tự động trả lời FAQ hành chính chính xác và dẫn nguồn số trang cụ thể.
+  * **Kỹ thuật & Vận hành (Discord Q&A):** Tổng hợp và cập nhật liên tục từ lịch sử hỏi đáp giữa học viên và admin/mentor để đưa ra gợi ý sửa lỗi code, setup môi trường kịp thời.
+  * **Cơ chế Fallback & Phản hồi:** Tích hợp tính năng "Báo cáo Mentor" và disclaimer rõ ràng khi gặp câu hỏi ngoài phạm vi dữ liệu để đảm bảo độ tin cậy.
+
+---
 
 > SPEC → Prototype → Demo. Hôm nay không có bài giảng mới — hôm nay chứng minh: SPEC là giả thuyết, prototype là bằng chứng, demo là thuyết phục.
 
