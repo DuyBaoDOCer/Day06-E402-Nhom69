@@ -11,7 +11,7 @@
 * **Giải pháp đột phá từ Kuter:** Sử dụng công nghệ RAG (Retrieval-Augmented Generation) đa nguồn:
   * **Hành chính (Handbook PDF):** Tự động trả lời FAQ hành chính chính xác và dẫn nguồn số trang cụ thể.
   * **Kỹ thuật & Vận hành (Discord Q&A):** Tổng hợp và cập nhật liên tục từ lịch sử hỏi đáp giữa học viên và admin/mentor để đưa ra gợi ý sửa lỗi code, setup môi trường kịp thời.
-  * **Cơ chế Fallback & Phản hồi:** Tích hợp tính năng "Báo cáo Mentor" và disclaimer rõ ràng khi gặp câu hỏi ngoài phạm vi dữ liệu để đảm bảo độ tin cậy.
+  * **Cơ chế Fallback & Phản hồi:** Tự động log câu hỏi chưa giải quyết vào file new_issue.json và hướng dẫn liên hệ Mentor qua Discord. Khi Mentor dùng tính năng **Reply** trên Discord để trả lời, bot tự động paraphrase và cập nhật tri thức động vào rulebase.json, tự động reload cache cho cả Web và Discord bot.
 
 ---
 

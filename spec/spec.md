@@ -32,8 +32,8 @@ Quan sát hành vi của các học viên khác trong lớp khi tương tác v�
 
 Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lời hành chính hoặc tài nguyên học tập, **Kuter** sẽ dùng AI RAG kết hợp đa nguồn để:
 1. **Automate** trả lời chính xác các câu hỏi FAQ hành chính dựa trên Handbook PDF (kèm trích dẫn số trang).
-2. **Augment** câu trả lời cho các câu hỏi vận hành và kỹ thuật bằng cách trích xuất, tổng hợp từ lịch sử hỏi đáp (Discord Q&A) giữa admin/mentor và học viên để đưa ra gợi ý giải pháp nháp nhanh chóng.
-3. **Fallback** an toàn bằng nút "Báo cáo Mentor" và disclaimer rõ ràng khi độ tin cậy thấp hoặc câu hỏi ngoài phạm vi dữ liệu.
+2. **Augment** câu trả lời cho các câu hỏi vận hành và kỹ thuật bằng cách trích xuất, tổng hợp từ lịch sử hỏi đáp (Discord Q&A) đã được phê duyệt trong Rule-base (rulebase.json) và hiển thị kèm tag **`[Rule-base]`**.
+3. **Fallback** an toàn bằng cách tự động ghi nhận câu hỏi chưa giải quyết (ghi log `new_issue.json` cục bộ) trên Discord, đồng thời trả về câu thoại hướng dẫn người dùng liên hệ Mentor trên Discord (với Web) hoặc hướng dẫn Mentor dùng tính năng **Reply** của Discord để bổ sung tri thức tức thì (với Discord bot).
 
 ---
 
@@ -42,9 +42,9 @@ Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lờ
 | Ô | Nội dung chi tiết |
 |---|---|
 | **Value** — Giá trị | - **Đối tượng:** Học viên và ứng viên VinAI Thực chiến.<br>- **Nỗi đau:** Trợ lý Kute cũ chỉ trả lời từ Handbook tĩnh, không cập nhật được Q&A vận hành và tài nguyên trên Discord.<br>- **AI giải quyết:** RAG tích hợp Handbook tĩnh và Q&A Discord động giúp học viên tự giải quyết vấn đề ngay lập tức. |
-| **Trust** — Niềm tin | - **Nhận diện sai:** Người dùng dễ dàng nhận diện nhờ disclaimer rõ ràng gắn kèm mọi câu trả lời kỹ thuật/vận hành từ Discord.<br>- **Xử lý sai:** Cung cấp nút "Báo cáo Mentor" ngay dưới câu trả lời và hệ thống bình chọn Thumbs Up/Down để hoàn tác và chuyển tiếp lên Mentor/Admin thực tế. |
-| **Feasibility** — Tính khả thi | - **Dữ liệu cần có:** Handbook PDF chính thức và lịch sử Q&A trên Discord đã được làm sạch.<br>- **Rủi ro lớn nhất:** AI hallucinate ra giải pháp kỹ thuật/thủ tục sai lệch gây bối rối cho học viên.<br>- **Ngưỡng dừng:** Nếu độ tin cậy của câu trả lời < 75%, bot tự động chuyển luồng sang tag Mentor hỗ trợ trực tiếp. |
-| **Tín hiệu học** | Khi học viên nhấn Thumbs Down hoặc "Báo cáo Mentor", câu hỏi và câu trả lời lỗi sẽ được tự động log lại vào cơ sở dữ liệu hiệu chỉnh để ban tổ chức kiểm duyệt, cập nhật dữ liệu huấn luyện hoặc tinh chỉnh prompt. |
+| **Trust** — Niềm tin | - **Nhận diện sai:** Người dùng dễ dàng nhận diện nhờ tag phân loại nguồn rõ ràng (`🗂 Rule-base`, `📄 Handbook`, `⚠️ Ngoài phạm vi`) đi kèm câu trả lời.<br>- **Xử lý sai:** Mentor có thể sửa sai hoặc bổ sung trực tiếp bằng cách dùng tính năng **Reply** của Discord trên tin nhắn của học viên hoặc tin nhắn fallback của bot. |
+| **Feasibility** — Tính khả thi | - **Dữ liệu cần có:** Handbook PDF chính thức và lịch sử Q&A trên Discord đã được làm sạch.<br>- **Rủi ro lớn nhất:** AI hallucinate ra giải pháp kỹ thuật/thủ tục sai lệch gây bối rối cho học viên.<br>- **Ngưỡng dừng:** Nếu độ tin cậy của câu trả lời thấp (cosine similarity < 0.78 hoặc không tìm thấy thông tin phù hợp), bot tự động chuyển luồng sang fallback, log issue chờ Mentor hỗ trợ. |
+| **Tín hiệu học** | Khi Mentor reply câu hỏi chưa giải quyết trên Discord, bot tự động sinh 5 câu paraphrase bằng Gemini 2.5 Flash để lưu cùng câu trả lời của Mentor vào `rulebase.json`, đồng thời tự động cập nhật cache embedding tức thì trên cả Web và Discord. |
 
 ---
 
@@ -62,9 +62,9 @@ Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lờ
 | Đường đi | Kịch bản trải nghiệm |
 |---|---|
 | **Đường thuận** | Học viên hỏi "Điều kiện tham gia lớp là gì?" -> Kuter truy xuất Handbook và trả lời chính xác kèm số trang trích dẫn. |
-| **Khi AI không chắc** | Học viên hỏi câu hỏi kỹ thuật phức tạp -> Kuter đưa ra giải pháp nháp dựa trên lịch sử Discord kèm disclaimer cảnh báo và nút "Báo cáo Mentor". |
-| **Khi AI sai** | Bot đưa ra câu trả lời không đúng -> Học viên bấm Thumbs Down hoặc nút "Báo cáo Mentor" để hủy câu trả lời và kích hoạt ticket hỗ trợ cho Mentor thực tế. |
-| **Khi người dùng sửa** | Học viên bấm báo cáo hoặc phản hồi -> Hệ thống log lại câu hỏi, câu trả lời sai và câu trả lời sửa đổi để cải tiến tri thức cho bot sau này. |
+| **Khi AI không chắc** | Học viên hỏi câu hỏi vận hành đã có trên Discord -> Kuter truy xuất dữ liệu từ Rule-base và hiển thị câu trả lời kèm tag **`[Rule-base]`**. |
+| **Khi AI sai (Ngoài phạm vi)** | Bot/Web trả về câu trả lời ngoài phạm vi (fallback). Trên Discord, câu hỏi tự động được ghi vào `new_issue.json` chờ Mentor. Trên Web, hướng dẫn người dùng liên hệ Mentor trên Discord. |
+| **Khi người dùng sửa** | Mentor dùng tính năng Reply trên Discord để trả lời -> Hệ thống tự động paraphrase câu hỏi, lưu Q&A mới vào `rulebase.json` và reload cache tức thì. |
 
 ---
 
@@ -77,7 +77,7 @@ Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lờ
 2. **Gợi ý code/lỗi kỹ thuật sai:**
    * *Khi nào xảy ra:* Khi lỗi của học viên quá mới hoặc lịch sử Discord chứa thông tin nhiễu.
    * *Hậu quả:* Học viên chạy code lỗi nghiêm trọng hơn, gây ức chế.
-   * *Cách xử lý:* Gắn disclaimer nổi bật và cung cấp nút báo cáo Mentor tức thì.
+   * *Cách xử lý:* Gắn nguồn trích dẫn hoặc tag **`[Rule-base]`**, tự động log câu hỏi không có câu trả lời rõ ràng vào `new_issue.json` để Mentor kiểm duyệt trên Discord.
 
 ---
 
@@ -88,7 +88,10 @@ Cho học viên và ứng viên VinAI Thực chiến đang cần câu trả lờ
   * *Kỳ vọng:* Kuter trả lời rõ ràng kèm trích dẫn số trang chính xác.
 * **Kịch bản kiểm thử Low-Confidence / Fallback Path:**
   * *Đầu vào:* "Lỗi đổi nhóm sau khi đã ghép cặp giải quyết thế nào?" hoặc "Lấy slide bài giảng Day 4 ở đâu?"
-  * *Kỳ vọng:* Kuter trích xuất câu trả lời đã có trên Discord, hiển thị cảnh báo thông tin tham khảo và hiển thị nút "Báo cáo Mentor".
+  * *Kỳ vọng:* Kuter trích xuất câu trả lời đã có trên Discord, hiển thị tag **`[Rule-base]`**. Nếu không tìm thấy, trả về câu thoại fallback hướng dẫn qua Discord và log câu hỏi vào `new_issue.json`.
+* **Kịch bản kiểm thử Dynamic Update Path (Tự học):**
+  * *Đầu vào:* Mentor Reply vào tin nhắn ngoài phạm vi trên Discord -> Bot phản hồi xác nhận lưu thành công 6 biến thể câu hỏi (gốc + 5 paraphrase) và tự động cập nhật tri thức.
+  * *Kỳ vọng:* Web reload cache và trả lời được ngay câu hỏi đó ở lượt sau với tag **`[Rule-base]`**.
 
 ---
 
