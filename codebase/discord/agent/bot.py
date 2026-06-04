@@ -1,3 +1,4 @@
+import os
 import asyncio
 import discord
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -20,9 +21,10 @@ _PARAPHRASE_PROMPT = ChatPromptTemplate.from_template(
 async def _generate_paraphrases(question: str) -> list[str]:
     """Dùng LLM sinh 5 cách hỏi khác nhau để mở rộng Rule-base (lazy init)."""
     try:
+        paraphrase_model = os.getenv('LLM_MODEL', 'gemini-2.5-flash')
         chain = (
             _PARAPHRASE_PROMPT
-            | ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7)
+            | ChatGoogleGenerativeAI(model=paraphrase_model, temperature=0.7)
             | StrOutputParser()
         )
         raw = await chain.ainvoke({"question": question})

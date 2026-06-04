@@ -38,5 +38,35 @@
     "question": "Quy trình cài AI log gồm những bước nào?",
     "answer": "bạn xem video hướng dẫn nha, Link: linknè",
     "source": "mentor_input"
+  },
+  {
+    "question": "bạn ăn cơm chưa",
+    "answer": "mình ăn rồi nhá",
+    "source": "mentor_input"
+  },
+  {
+    "question": "Bạn dùng bữa chưa?",
+    "answer": "mình ăn rồi nhá",
+    "source": "mentor_input"
+  },
+  {
+    "question": "Bạn ăn gì chưa?",
+    "answer": "mình ăn rồi nhá",
+    "source": "mentor_input"
+  },
+  {
+    "question": "Đã ăn cơm chưa?",
+    "answer": "mình ăn rồi nhá",
+    "source": "mentor_input"
+  },
+  {
+    "question": "Bạn ăn chưa?",
+    "answer": "mình ăn rồi nhá",
+    "source": "mentor_input"
+  },
+  {
+    "question": "Bạn đã dùng cơm chưa?",
+    "answer": "mình ăn rồi nhá",
+    "source": "mentor_input"
   }
 ]

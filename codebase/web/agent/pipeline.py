@@ -1,4 +1,5 @@
 import os
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredFileLoader
@@ -51,40 +52,36 @@ Trả lời theo cấu trúc markdown sau:
 *(Nguồn: <tên file hoặc trang nếu có>)*
 """
 
-_TEMPLATE = (
-    _SYSTEM_PROMPT
-    + "\n---\nContext:\n{context}\n\nQuestion: {question}"
-)
+_TEMPLATE = _SYSTEM_PROMPT + "\n---\nContext:\n{context}\n\nQuestion: {question}"
 
 
 def build_pipeline(data_path: str = './data'):
     """Nạp tài liệu PDF, tạo vectorstore FAISS và RAG chain.
 
     Returns:
-        embeddings: GoogleGenerativeAIEmbeddings — dùng để tìm kiếm rulebase.
-        rag_chain:  LangChain chain — dùng để trả lời câu hỏi từ handbook.
+        embeddings: GoogleGenerativeAIEmbeddings
+        rag_chain:  LangChain chain
     """
+    embedding_model = os.getenv('EMBEDDING_MODEL', 'gemini-embedding-001')
+    llm_model       = os.getenv('LLM_MODEL', 'gemini-2.5-flash')
+
     print("Đang nạp tài liệu và xây dựng Vector Database...")
     loader = DirectoryLoader(
         path=data_path,
         glob='**/*.pdf',
         loader_cls=UnstructuredFileLoader,
         show_progress=True,
-        use_multithreading=False,  # tránh lỗi OMP trên macOS
+        use_multithreading=False,
     )
     docs = loader.load()
 
-    text_splitter = RecursiveCharacterTextSplitter(
+    splits = RecursiveCharacterTextSplitter(
         chunk_size=1200,
         chunk_overlap=200,
         add_start_index=True,
         strip_whitespace=True,
         separators=_MARKDOWN_SEPARATORS,
-    )
-    splits = text_splitter.split_documents(docs)
-
-    embedding_model = os.getenv('EMBEDDING_MODEL', 'gemini-embedding-001')
-    llm_model       = os.getenv('LLM_MODEL', 'gemini-2.5-flash')
+    ).split_documents(docs)
 
     embeddings = GoogleGenerativeAIEmbeddings(model=embedding_model)
 
@@ -99,13 +96,10 @@ def build_pipeline(data_path: str = './data'):
         search_kwargs={"k": 5, "score_threshold": 0.2},
     )
 
-    prompt = ChatPromptTemplate.from_template(_TEMPLATE)
-    llm = ChatGoogleGenerativeAI(model=llm_model, temperature=0)
-
     rag_chain = (
         {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | llm
+        | ChatPromptTemplate.from_template(_TEMPLATE)
+        | ChatGoogleGenerativeAI(model=llm_model, temperature=0)
         | StrOutputParser()
     )
 
