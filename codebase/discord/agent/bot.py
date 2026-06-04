@@ -1,11 +1,34 @@
 import asyncio
 import discord
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from tools.rulebase import (
     search_rulebase,
     save_to_rulebase,
     log_new_issue,
     build_rulebase_cache,
 )
+
+_paraphrase_chain = (
+    ChatPromptTemplate.from_template(
+        "Generate 5 Vietnamese paraphrases of the following question. "
+        "Return ONLY the paraphrases, one per line, no numbering, no explanation.\n\n"
+        "Question: {question}"
+    )
+    | ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7)
+    | StrOutputParser()
+)
+
+
+async def _generate_paraphrases(question: str) -> list[str]:
+    """Dùng LLM sinh 5 cách hỏi khác nhau để mở rộng Rule-base."""
+    try:
+        raw = await _paraphrase_chain.ainvoke({"question": question})
+        paraphrases = [line.strip() for line in raw.strip().splitlines() if line.strip()]
+        return paraphrases[:5]
+    except Exception:
+        return []
 
 OUT_OF_SCOPE_PHRASE = "i don't know based on the provided document"
 OUT_OF_SCOPE_REPLY = (
@@ -45,7 +68,7 @@ def create_client(embeddings, rag_chain) -> type:
                 return
 
             # Bước 2: RAG (Handbook)
-            loading_msg = await message.channel.send("🔍 Đang tra cứu tài liệu, bạn đợi chút nhé...")
+            loading_msg = await message.channel.send("Đang tra cứu tài liệu, bạn đợi chút nhé...")
             try:
                 answer = await rag_chain.ainvoke(question)
                 if OUT_OF_SCOPE_PHRASE in answer.lower():
@@ -72,10 +95,17 @@ def create_client(embeddings, rag_chain) -> type:
                     answer = message.content.strip()
                     if answer:
                         _cleanup_pending(question)
-                        await asyncio.to_thread(save_to_rulebase, question, answer)
+                        # Sinh paraphrase để mở rộng coverage của rule-base
+                        paraphrases = await _generate_paraphrases(question)
+                        all_questions = [question] + paraphrases
+                        await asyncio.to_thread(save_to_rulebase, all_questions, answer)
                         await asyncio.to_thread(build_rulebase_cache, embeddings)
+                        para_preview = "\n".join(f"  - {p}" for p in paraphrases)
                         await message.reply(
-                            f"Đã lưu vào Rule-base!\n**Q:** {question}\n**A:** {answer}",
+                            f"✅ Đã lưu vào Rule-base! ({len(all_questions)} biến thể câu hỏi)\n"
+                            f"**Q gốc:** {question}\n"
+                            f"**Paraphrases:**\n{para_preview}\n"
+                            f"**A:** {answer}",
                             mention_author=False,
                         )
                     return

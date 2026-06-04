@@ -4,7 +4,7 @@ import numpy as np
 
 RULEBASE_PATH = './data/rulebase.json'
 NEW_ISSUE_PATH = './data/new_issue.json'
-SIMILARITY_THRESHOLD = 0.85
+SIMILARITY_THRESHOLD = 0.78
 
 # Cache: list of (embedding_vector, rulebase_item)
 rulebase_cache: list = []
@@ -21,11 +21,14 @@ def load_rulebase() -> list:
                 return []
     return []
 
-
-def save_to_rulebase(question: str, answer: str):
-    """Lưu cặp câu hỏi - câu trả lời vào Rule-base."""
+def save_to_rulebase(questions: list[str], answer: str):
+    """Lưu một hoặc nhiều câu hỏi (bao gồm paraphrase) cùng câu trả lời vào Rule-base."""
     rulebase = load_rulebase()
-    rulebase.append({"question": question, "answer": answer, "source": "mentor_input"})
+    existing = {e['question'] for e in rulebase}
+    for q in questions:
+        if q and q not in existing:
+            rulebase.append({"question": q, "answer": answer, "source": "mentor_input"})
+            existing.add(q)
     with open(RULEBASE_PATH, 'w', encoding='utf-8') as f:
         json.dump(rulebase, f, ensure_ascii=False, indent=2)
 
@@ -81,7 +84,7 @@ def search_rulebase(emb_model, question: str):
     return None
 
 
-# Đăng ký tools cho Agent
+# Tools for Agent
 TOOLS = [
     {
         "name": "search_rulebase",
@@ -96,7 +99,7 @@ TOOLS = [
         "name": "save_to_rulebase",
         "description": (
             "Lưu cặp câu hỏi - câu trả lời vào Rule-base (rulebase.json). "
-            "Input: question (str), answer (str). Output: None."
+            "Input: questions (list[str]), answer (str). Output: None."
         ),
         "function": save_to_rulebase,
     },

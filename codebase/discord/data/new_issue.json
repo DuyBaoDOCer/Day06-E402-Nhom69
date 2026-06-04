@@ -2,5 +2,29 @@
   {
     "question": "làm sao để đổi chủ đề nhóm đã chọn",
     "status": "pending"
+  },
+  {
+    "question": "có bao nhiêu giảng viên",
+    "status": "pending"
+  },
+  {
+    "question": "chương trình có bao nhiêu người dạy",
+    "status": "pending"
+  },
+  {
+    "question": "có bao nhiêu người giảng dạy ở chương trình này",
+    "status": "pending"
+  },
+  {
+    "question": "đã có bao nhiêu giảng viên ở chương trình này",
+    "status": "pending"
+  },
+  {
+    "question": "cách cài AI log ?",
+    "status": "pending"
+  },
+  {
+    "question": "cách setup AI log ?",
+    "status": "pending"
   }
 ]
